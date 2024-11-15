@@ -1,0 +1,57 @@
+services:
+  laravelauth-database:
+    image: mariadb
+    restart: always
+    container_name: laravelauth-database
+    env_file:
+      - .env
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - laravelauth-network
+      - npm
+
+  laravelauth-phpmyadmin:
+    container_name: laravelauth-phpmyadmin
+    image: phpmyadmin
+    restart: always
+    environment:
+      - PMA_HOST=laravelauth-database
+    networks:
+      - laravelauth-network
+      - npm
+    depends_on:
+      - laravelauth-database
+
+  laravelauth-website:
+    container_name: laravelauth-website
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./website:/var/www/html
+      - node_modules:/var/www/html/node_modules
+    networks:
+      - laravelauth-network
+      - npm
+    # user: "1000:1000" #on my pc
+    # ports:
+    #   - 5174:5173
+    depends_on:
+      - laravelauth-database
+
+volumes:
+  db-data:
+  node_modules:
+networks:
+  laravelauth-network:
+    driver: bridge
+  npm:
+    external: true
+    name: npm
